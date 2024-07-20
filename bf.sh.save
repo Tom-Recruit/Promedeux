@@ -1,0 +1,68 @@
+# brute force decipher
+
+start=$(date +%s)
+truncate -s 0 bf.txt
+sleep 1
+
+rng=$(grep -oE '[0-9]+' range.txt | head -n 1)
+type=$(grep -oE '[0-9]+' char_type.txt | head -n 1)
+
+case $type in
+    1) char='a' ;;
+    2) char='A' ;;
+    3) char='1' ;;
+    4) char='aA1!' ;;
+    *) char='aA1!' ;;
+esac
+
+(
+#fcrackzip -l 4 -b -c 'aA1!' fotocompress.zip &
+fcrackzip -l $rng -v -b -c 'aA1!' fotocompress.zip
+fcrackzip -u -l $rng -b -c $char fotocompress.zip >> bf.txt
+#echo $rng, $type
+
+)
+###fcrackzip -u -l 4 -b -c 'aA1!' -B -p $(echo {a..z}{A..Z}{0..9} | tr -d ' ') fotocompress.zip >> bf.txt
+wait
+sleep 1
+ #cat bf.txt
+
+#fcrackzip -D -p diccionario.txt -u -v fotocompress.zip
+
+###BOX
+
+show_box() {
+    local text="$1"
+    local length=${#text}
+   #local con_w=$(tput cols)
+    local width=$((7 + length))
+    local padding=$(( ($width - ${#text} - 4) / 2 ))
+    local border=$(printf "%${width}s" | tr ' ' '*')
+
+    echo "\t\t\t\t""$border"
+    printf "\t\t\t\t\t""*%*s%*s*\n" $padding "$text" $padding ""
+    echo "\t\t\t\t""$border"
+}
+
+pass_line=$(grep -i "PASSWORD FOUND" bf.txt)
+if [ -n "$pass_line" ]; then
+    pass=$(echo "$pass_line" | grep -oE 'pw == [[:alnum:]]+' | cut -d ' ' -f 3)
+    show_box "$(tput setaf 5) Contraseña: $pass$(tput sgr0)"
+    echo
+else
+    echo "Sin Coincidencias"
+fi
+###ENDBOX
+
+#time elapsed
+end=$(date +%s)
+elapsed=$((end-start))
+
+#calc minutes
+min=$((elapsed / 60))
+seg=$((elapsed % 60))
+
+echo "\t\t\t\t""$(tput setaf 5) Complete: $min minuto(s) $seg segundos. $(tput sgr0)"
+
+
+#by JS
